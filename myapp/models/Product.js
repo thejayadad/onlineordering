@@ -43,7 +43,7 @@ const ProductSchema = new mongoose.Schema(
             text: { type: String},
             price: { type: Number },
           },
-        ],
+        ],  
       },
     },
     { timestamps: true }

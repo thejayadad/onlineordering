@@ -3,29 +3,79 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios'
 import { AiFillShopping } from 'react-icons/ai'
 import { useCartContext } from '@/lib/cartContext';
+import { useDispatch } from "react-redux";
+import { addProduct } from '@/redux/cartSlice';
 
 const ProductDetail = (ctx) => {
   const [productDetails, setProductDetails] = useState({});
   const [selectedSides, setSelectedSides] = useState([]);
   const [selectedDrinks, setSelectedDrinks] = useState([]);
   const [selectedExtraOptions, setSelectedExtraOptions] = useState([]);
-  const [selectedPrep, setSelectedPrep] = useState(''); // For the prep dropdown
   const [quantity, setQuantity] = useState(1);
   const [instructions, setInstructions] = useState('');
-  const { addToCart } = useCartContext()
+  const [selectedPrep, setSelectedPrep] = useState(''); 
+  const [selectedSize, setSelectedSize] = useState(3);
+  const dispatch = useDispatch();
+
 
   const addQuantity = (command) => {
-    setQuantity(prev => {
-        if (command === 'dec') {
-            if (prev <= 1) return 1
-            else return prev - 1
-        }
+    setQuantity((prev) => {
+      if (command === 'dec') {
+        if (prev <= 1) return 1;
+        else return prev - 1;
+      }
 
-        if (command === 'inc') {
-            return prev + 1
-        }
-    })
-}
+      if (command === 'inc') {
+        return prev + 1;
+      }
+    });
+  };
+  const calculateTotalPrice = () => {
+    // Calculate the total price based on selected options
+    let total = productDetails?.prices[selectedSize];
+
+    selectedSides.forEach((sideText) => {
+      const selectedSide = productDetails?.sides.find((side) => side.text === sideText);
+      if (selectedSide) {
+        total += selectedSide.price;
+      }
+    });
+
+    selectedDrinks.forEach((drinkText) => {
+      const selectedDrink = productDetails?.drinks.find((drink) => drink.text === drinkText);
+      if (selectedDrink) {
+        total += selectedDrink.price;
+      }
+    });
+
+    selectedExtraOptions.forEach((optionText) => {
+      const selectedOption = productDetails?.extraOptions.find((option) => option.text === optionText);
+      if (selectedOption) {
+        total += selectedOption.price;
+      }
+    });
+
+    return total * quantity;
+  };
+
+  const handleAddToCart = () => {
+    // Calculate the total price based on selected options
+    const total = calculateTotalPrice();
+
+    // Prepare the product object to add to the cart
+    const productToAdd = {
+      ...productDetails,
+      selectedSize,
+      selectedSides,
+      selectedDrinks,
+      selectedExtraOptions,
+      quantity,
+      total,
+    };
+
+    // Dispatch the action to add the product to the cart using Redux Toolkit
+    dispatch(addProduct(productToAdd));
+  };
 
 
   useEffect(() => {
@@ -38,24 +88,6 @@ const ProductDetail = (ctx) => {
     }
     fetchProduct();
   }, []);
-
-  const handleAddToCart = () => {
-    // Here, you can collect all the selected options and quantities
-    // and perform any logic for adding the product to the cart.
-    // You can use the state variables to access the selected data.
-    // For example, selectedSides, selectedDrinks, selectedExtraOptions,
-    // selectedPrep, quantity, and instructions.
-    console.log('Product added to cart:', {
-      productDetails,
-      selectedSides,
-      selectedDrinks,
-      selectedExtraOptions,
-      selectedPrep,
-      quantity,
-      instructions,
-    });
-  };
-
   return (
     <section className='px-4 py-12'>
       <div className='max-w-screen-xl mx-auto'>
@@ -64,6 +96,16 @@ const ProductDetail = (ctx) => {
           <p>{productDetails?.title}</p>
           <p>{productDetails?.desc}</p>
           <p>Price: ${productDetails?.prices?.[0]}</p>
+
+          <h3>Select Size:</h3>
+          <select
+            value={selectedSize}
+            onChange={(e) => setSelectedSize(Number(e.target.value))}
+          >
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+            <option value={5}>5</option>
+          </select>
 
           {/* Sides Selection */}
           <h3>Select Sides:</h3>
@@ -154,7 +196,7 @@ const ProductDetail = (ctx) => {
           />
 
           {/* Add to Cart Button */}
-          <button  onClick={() => addToCart({...productDetails, quantity})}>Add to Cart</button>
+          <button onClick={handleAddToCart}>Add to Cart</button>
         </div>
       </div>
     </section>

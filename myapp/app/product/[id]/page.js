@@ -1,5 +1,8 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import axios from 'axios'
+import { AiFillShopping } from 'react-icons/ai'
+import { useCartContext } from '@/lib/cartContext';
 
 const ProductDetail = (ctx) => {
   const [productDetails, setProductDetails] = useState({});
@@ -9,6 +12,21 @@ const ProductDetail = (ctx) => {
   const [selectedPrep, setSelectedPrep] = useState(''); // For the prep dropdown
   const [quantity, setQuantity] = useState(1);
   const [instructions, setInstructions] = useState('');
+  const { addToCart } = useCartContext()
+
+  const addQuantity = (command) => {
+    setQuantity(prev => {
+        if (command === 'dec') {
+            if (prev <= 1) return 1
+            else return prev - 1
+        }
+
+        if (command === 'inc') {
+            return prev + 1
+        }
+    })
+}
+
 
   useEffect(() => {
     async function fetchProduct() {
@@ -121,12 +139,11 @@ const ProductDetail = (ctx) => {
 
           {/* Quantity Selection */}
           <h3>Quantity:</h3>
-          <input
-            type='number'
-            min='1'
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-          />
+          <div className='flex gap-6 items-center'>
+              <span onClick={() => addQuantity('dec')} className='bg-slate-300 px-4 py-2 text-[18px]'>-</span>
+              <span>{quantity}</span>
+              <span onClick={() => addQuantity('inc')} className='bg-slate-300 px-4 py-2 text-[18px]'>+</span>
+          </div>
 
           {/* Instructions */}
           <h3>Instructions:</h3>
@@ -137,7 +154,7 @@ const ProductDetail = (ctx) => {
           />
 
           {/* Add to Cart Button */}
-          <button onClick={handleAddToCart}>Add to Cart</button>
+          <button  onClick={() => addToCart({...productDetails, quantity})}>Add to Cart</button>
         </div>
       </div>
     </section>
